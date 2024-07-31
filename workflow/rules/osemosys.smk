@@ -4,7 +4,7 @@ wildcard_constraints:
     modelrun="\d+",
     scenarios="\d+"
 
-ruleorder: unzip_solution > solve_lp
+#ruleorder: unzip_solution > solve_lp
 
 def csv_from_scenario(wildcards):
     return SCENARIOS.loc[int(wildcards.scenario), 'csv']
@@ -92,9 +92,9 @@ rule generate_lp_file:
     conda: "../envs/osemosys.yaml"
     group: "gen_lp"
     threads:
-        1
+        2
     shell:
-        "glpsol -m {input.model} -d {input.data} --wlp {output} --check > {log}"
+        "glpsol -m {input.model} -d {input.data} --wlp {output} --check >  {log} 2>&1"
 
 rule unzip_lp:
     message: "Unzipping LP file"
@@ -105,7 +105,9 @@ rule unzip_lp:
     output:
         temp("temp/{scenario}/model_{model_run}.lp")
     shell:
-        "gunzip -fcq {input} > {output}"
+#        "gunzip -fcq {input} > {output}"
+        "python workflow/scripts/decompress.py {input} {output}"
+
 
 rule solve_lp:
     message: "Solving the LP for '{output}' using {config[solver]}"
@@ -113,7 +115,8 @@ rule solve_lp:
         "temp/{scenario}/model_{model_run}.lp"
     output:
         json="modelruns/{scenario}/model_{model_run}/{model_run}.json",
-        solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol{zip}", zip = ZIP))
+        #solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol{zip_extension}", zip_extension=ZIP))
+        solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol"))
     log:
         "results/log/solver_{scenario}_{model_run}.log"
     params:
@@ -129,49 +132,50 @@ rule solve_lp:
     threads:
         3
     shell:
-        """
-        if [ {config[solver]} = gurobi ]
-        then
-          gurobi_cl Method=2 Threads={threads} LogFile={log} LogToConsole=0 ScaleFlag=2 NumericFocus=3 ResultFile={output.solution} ResultFile={output.json} ResultFile={params.ilp} {input}
-        elif [ {config[solver]} = cplex ]
-        then
-          echo "set threads {threads}"   > {params.cplex}
-          echo "set timelimit 43200"     >> {params.cplex}
-          echo "read {input}" 	         >> {params.cplex}
-          echo "baropt"                  >> {params.cplex}
-          echo "write {output.solution}" >> {params.cplex}
-          echo "quit"                    >> {params.cplex}
-          cplex < {params.cplex} > {log} && touch {output.json}
-        else
-          cbc {input} solve -sec 1500 -solu {output.solution} 2> {log} && touch {output.json}
-        fi
-        """
+        # """
+        # if [ {config[solver]} = gurobi ] then 
+        # gurobi_cl Method=2 Threads={threads} LogFile={log} LogToConsole=0 ScaleFlag=2 NumericFocus=3 ResultFile={output.solution} ResultFile={output.json} ResultFile={params.ilp} {input} 
+        # elif [ {config[solver]} = cplex ]; then 
+        #     echo "set threads {threads}"   > {params.cplex} 
+        #     echo "set timelimit 43200"     >> {params.cplex} 
+        #     echo "read {input}" 	         >> {params.cplex} 
+        #     echo "baropt"                  >> {params.cplex} 
+        #     echo "write {output.solution}" >> {params.cplex} 
+        #     echo "quit"                    >> {params.cplex} 
+        #     cplex < {params.cplex} > {log} && touch {output.json} 
+        # else 
+             "cbc {input} solve -sec 1500 -solu {output.solution} 2> {log} && touch {output.json}"
+        # fi
+        # """
+# rule unzip_solution:
+#     message: "Unzip solution file {input}"
+#     group: "results"
+#     input: "temp/{scenario}/model_{model_run}.sol.gz"
+#     output: temp("temp/{scenario}/model_{model_run}.sol")
+#     shell: 
+#         #"gunzip -fcq {input} > {output}"
+#         "python workflow/scripts/decompress.py {input} {output}"
 
-rule unzip_solution:
-    message: "Unzip solution file {input}"
-    group: "results"
-    input: "temp/{scenario}/model_{model_run}.sol.gz"
-    output: temp("temp/{scenario}/model_{model_run}.sol")
-    shell: "gunzip -fcq {input} > {output}"
 
 rule process_solution:
     message: "Processing {config[solver]} solution for '{output}'"
     group: 'results'
     input:
         solution="temp/{scenario}/model_{model_run}.sol",
-        datafile="temp/{scenario}/model_{model_run}.txt",
+        #datafile="temp/{scenario}/model_{model_run}.txt",
         config="results/{scenario}/model_{model_run}/config.yaml",
     output: 
         expand("results/{{scenario}}/model_{{model_run}}/results/{csv}.csv", csv=OUTPUT_FILES)
     conda: "../envs/otoole.yaml"
     log: "results/log/process_solution_{scenario}_{model_run}.log"
     params:
+        input_folder= "results/{scenario}/model_{model_run}/data",
         folder="results/{scenario}/model_{model_run}/results"
     shell: 
-        """
-        mkdir -p {params.folder}
-        otoole -v results {config[solver]} csv {input.solution} {params.folder} datafile {input.datafile} {input.config} &> {log}
-        """
+        #"""
+        #if not exist {params.folder} mkdir {params.folder}
+        "otoole -v results {config[solver]} csv {input.solution} {params.folder} csv {params.input_folder} {input.config} > {log} 2>&1"
+        #"""
 
 rule get_statistics:
     message: "Extract the {config[solver]} statistics from the sol file"
@@ -179,42 +183,42 @@ rule get_statistics:
     output: "modelruns/{scenario}/model_{model_run}/{model_run}.stats"
     group: "solve"
     shell: 
-        """
-        if [ {config[solver]} = cplex ]
-        then
-          head -n 27 {input} | tail -n 25 > {output}
-        else
-          head -n 1 {input} > {output}
-        fi
-        """
+        #"""
+        #if [ {config[solver]} = cplex ]; then
+        #  head -n 27 {input} | tail -n 25 > {output}
+        #else
+        "head -n 1 {input} > {output}"
+        #fi
+        #"""
 
 rule get_objective_value:
     input: expand("modelruns/{{scenario}}/model_{model_run}/{model_run}.stats",  model_run=MODELRUNS)
     output: "results/{scenario}/objective_{scenario}.csv"
     shell:
-        """
-        echo "FILE,OBJECTIVE,STATUS" > {output}
-        if [ {config[solver]} = cplex ]
-        then
-          for FILE in {input}
-          do
-          OBJ=$(head $FILE | grep -e 'objectiveValue' | cut -f 2 -d '=')
-          STATUS=$(head $FILE | grep -e 'solutionStatusString' | cut -f 2 -d '=')
-          JOB=$(echo $FILE | cut -f 3 -d '/' | cut -f 1 -d '.')
-          echo "$JOB,$OBJ,$STATUS" >> {output}
-          done
-        elif [ {config[solver]} = cbc ]
-        then
-          i=0
-          for FILE in {input}
-          do
-          OBJ=$(head $FILE | cut -f 5 -d ' ')
-          STATUS=$(head $FILE | cut -f 1 -d ' ')
-          JOB=$FILE
-          echo "$JOB,$OBJ,$STATUS" >> {output}
-          ((i=i+1))
-          done
-        else
-          echo "To be done"
-        fi
-        """
+         "python workflow/scripts/get_objective_value.py"
+        # """
+        # echo "FILE,OBJECTIVE,STATUS" > {output}
+        # if [ {config[solver]} = cplex ]
+        # then
+        #   for FILE in {input}
+        #   do
+        #   OBJ=$(head $FILE | grep -e 'objectiveValue' | cut -f 2 -d '=')
+        #   STATUS=$(head $FILE | grep -e 'solutionStatusString' | cut -f 2 -d '=')
+        #   JOB=$(echo $FILE | cut -f 3 -d '/' | cut -f 1 -d '.')
+        #   echo "$JOB,$OBJ,$STATUS" >> {output}
+        #   done
+        # elif [ {config[solver]} = cbc ]
+        # then
+        #   i=0
+        #   for FILE in {input}
+        #   do
+        #   OBJ=$(head $FILE | cut -f 5 -d ' ')
+        #   STATUS=$(head $FILE | cut -f 1 -d ' ')
+        #   JOB=$FILE
+        #   echo "$JOB,$OBJ,$STATUS" >> {output}
+        #   ((i=i+1))
+        #   done
+        # else
+        #   echo "To be done"
+        # fi
+        # """

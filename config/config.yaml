@@ -2,25 +2,25 @@
 
 # Populate the scenarios.csv file with a list of scenario names
 # and path (description optional) to the model csv data
-scenarios: config/scenarios.csv
+scenarios: config/model_clews/scenarios.csv
 
 # Tell the workflow which model results to plot
-results: config/results.csv
+results: config/model_clews/results.csv
 
 # Filetype options: 'csv' or 'parquet' or 'feather'
 filetype: csv
 
 # Define the uncertain parameters used to define the Monte Carlo sample
-parameters: config/parameters.csv
+parameters: config/model_clews/parameters.csv
 
 # Path to the OSeMOSYS model file
-model_file: resources/osemosys_fast.txt
+model_file: resources/model_clews/osemosys_DR.txt
 
 # Choose a solver, choices: 'cbc' or 'gurobi' or 'cplex'
 solver: cbc
 
 # Sampling - how large should the sample be?
-replicates: 10
+replicates: 2
 
 # Scale Elementary Effects (True/False)
 scale: False

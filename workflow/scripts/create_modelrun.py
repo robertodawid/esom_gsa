@@ -94,7 +94,7 @@ def get_types_from_tuple(index: list, param: str, config: Dict) -> Tuple:
             typed_index.append(str(element))
         elif this_type == 'float':
             typed_index.append(float(element))
-        elif this_type == 'int':
+        elif this_type == 'int64':
             typed_index.append(int(element))
 
     return typed_index

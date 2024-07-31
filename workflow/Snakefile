@@ -47,24 +47,24 @@ INPUT_FILES = INPUT_FILES_PARAMS + INPUT_FILES_SETS
 OUTPUT_FILES = get_expected_files(otoole_config_path, "result")
 
 # bug in otoole 1.0.4 where these are not being properly calculated 
-files_to_remove = [
-    "CapitalInvestment", 
-    "NewStorageCapacity", 
-    "NumberOfNewTechnologyUnits", 
-    "SalvageValueStorage", 
-    "StorageLevelDayTypeFinish", 
-    "StorageLevelDayTypeStart", 
-    "StorageLevelSeasonStart", 
-    "StorageLevelYearFinish", 
-    "StorageLevelYearStart", 
-    "Trade"
-]
-OUTPUT_FILES = [x for x in OUTPUT_FILES if x not in files_to_remove]
+# files_to_remove = [
+#     "CapitalInvestment", 
+#     "NewStorageCapacity", 
+#     "NumberOfNewTechnologyUnits", 
+#     "SalvageValueStorage", 
+#     "StorageLevelDayTypeFinish", 
+#     "StorageLevelDayTypeStart", 
+#     "StorageLevelSeasonStart", 
+#     "StorageLevelYearFinish", 
+#     "StorageLevelYearStart", 
+#     "Trade"
+# ]
+# OUTPUT_FILES = [x for x in OUTPUT_FILES if x not in files_to_remove]
 
 include: "rules/sample.smk"
 include: "rules/osemosys.smk"
 include: "rules/results.smk"
-include: "rules/paper.smk"
+#include: "rules/paper.smk"
 
 # needed for running examples via jupyter notebook 
 args = sys.argv
