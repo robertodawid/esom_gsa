@@ -17,7 +17,7 @@ parameters: config/model_clews/parameters.csv
 model_file: resources/model_clews/osemosys_DR.txt
 
 # Choose a solver, choices: 'cbc' or 'gurobi' or 'cplex'
-solver: cbc
+solver: gurobi
 
 # Sampling - how large should the sample be?
 replicates: 2

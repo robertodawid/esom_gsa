@@ -134,7 +134,7 @@ rule solve_lp:
     shell:
         # """
         # if [ {config[solver]} = gurobi ] then 
-        # gurobi_cl Method=2 Threads={threads} LogFile={log} LogToConsole=0 ScaleFlag=2 NumericFocus=3 ResultFile={output.solution} ResultFile={output.json} ResultFile={params.ilp} {input} 
+        "gurobi_cl Method=2 Threads={threads} LogFile={log} LogToConsole=0 ScaleFlag=2 NumericFocus=3 ResultFile={output.solution} ResultFile={output.json} ResultFile={params.ilp} {input}" 
         # elif [ {config[solver]} = cplex ]; then 
         #     echo "set threads {threads}"   > {params.cplex} 
         #     echo "set timelimit 43200"     >> {params.cplex} 
@@ -144,7 +144,7 @@ rule solve_lp:
         #     echo "quit"                    >> {params.cplex} 
         #     cplex < {params.cplex} > {log} && touch {output.json} 
         # else 
-             "cbc {input} solve -sec 1500 -solu {output.solution} 2> {log} && touch {output.json}"
+        #     "cbc {input} solve -sec 1500 -solu {output.solution} 2> {log} && touch {output.json}"
         # fi
         # """
 # rule unzip_solution:
@@ -187,7 +187,7 @@ rule get_statistics:
         #if [ {config[solver]} = cplex ]; then
         #  head -n 27 {input} | tail -n 25 > {output}
         #else
-        "head -n 1 {input} > {output}"
+        "head -n 2 {input} > {output}"
         #fi
         #"""
 
@@ -195,7 +195,7 @@ rule get_objective_value:
     input: expand("modelruns/{{scenario}}/model_{model_run}/{model_run}.stats",  model_run=MODELRUNS)
     output: "results/{scenario}/objective_{scenario}.csv"
     shell:
-         "python workflow/scripts/get_objective_value.py"
+         "workflow/scripts/get_objective_value.py"
         # """
         # echo "FILE,OBJECTIVE,STATUS" > {output}
         # if [ {config[solver]} = cplex ]
