@@ -29,7 +29,7 @@ def main(input_files, output_file):
 
     # Write the DataFrame to the output file
     df.to_csv(output_file, index=False)
-    print(input_files)
+    
 
 if __name__ == '__main__':
 

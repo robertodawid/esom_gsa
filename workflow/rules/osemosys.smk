@@ -195,32 +195,32 @@ rule get_objective_value:
     input: expand("modelruns/{{scenario}}/model_{model_run}/{model_run}.stats",  model_run=MODELRUNS)
     output: "results/{scenario}/objective_{scenario}.csv"
     run:
-         "workflow/scripts/get_objective_value.py"
-        # # Extract output file path
-        # output_file = str(output[0]) if isinstance(output, list) else str(output)
-        # data = []
-        # # Loop over the input files
-        # for input_file in input:
-        #     # Extract the model run from the input file path
-        #     filename = os.path.basename(input_file)
-        #     model_run = filename.split('.')[0]
+        #"workflow/scripts/get_objective_value.py"
+        # Extract output file path
+        output_file = str(output[0]) if isinstance(output, list) else str(output)
+        data = []
+        # Loop over the input files
+        for input_file in input:
+            # Extract the model run from the input file path
+            filename = os.path.basename(input_file)
+            model_run = filename.split('.')[0]
 
-        #     # Read the input file and extract the objective value and status
-        #     with open(input_file, 'r') as f:
-        #         lines = f.readlines()
-        #         #objective_value = lines[0].split('=')[1].strip()
-        #         # Extract the objective value from the second line
-        #         objective_value_line = lines[1]
-        #         print(objective_value_line)
-        #         objective_value = objective_value_line.split('=')[1].strip()
-        #         print(objective_value)
-        #         status = 'Solved with gurobi'  
-        #         # Append the data to the list
-        #         data.append([model_run, objective_value, status])
+            # Read the input file and extract the objective value and status
+            with open(input_file, 'r') as f:
+                lines = f.readlines()
+                #objective_value = lines[0].split('=')[1].strip()
+                # Extract the objective value from the second line
+                objective_value_line = lines[1]
+                print(objective_value_line)
+                objective_value = objective_value_line.split('=')[1].strip()
+                print(objective_value)
+                status = 'Solved with gurobi'  
+                # Append the data to the list
+                data.append([model_run, objective_value, status])
 
-        # # Convert the list to a DataFrame
-        # df = pd.DataFrame(data, columns=['JOB', 'OBJECTIVE', 'STATUS'])
+        # Convert the list to a DataFrame
+        df = pd.DataFrame(data, columns=['JOB', 'OBJECTIVE', 'STATUS'])
 
-        # # Write the DataFrame to the output file
-        # df.to_csv(output_file, index=False)
+        # Write the DataFrame to the output file
+        df.to_csv(output_file, index=False)
        
