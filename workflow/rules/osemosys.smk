@@ -92,7 +92,7 @@ rule generate_lp_file:
     conda: "../envs/osemosys.yaml"
     group: "gen_lp"
     threads:
-        2
+        8
     shell:
         "glpsol -m {input.model} -d {input.data} --wlp {output} --check >  {log} 2>&1"
 
@@ -115,8 +115,8 @@ rule solve_lp:
         "temp/{scenario}/model_{model_run}.lp"
     output:
         json="modelruns/{scenario}/model_{model_run}/{model_run}.json",
-        #solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol{zip_extension}", zip_extension=ZIP))
-        solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol"))
+        solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol{zip_extension}", zip_extension=ZIP))
+        #solution=temp(expand("temp/{{scenario}}/model_{{model_run}}.sol"))
     log:
         "results/log/solver_{scenario}_{model_run}.log"
     params:
@@ -130,7 +130,7 @@ rule solve_lp:
         time=720
     group: "solve"
     threads:
-        3
+        8
     shell:
         # """
         # if [ {config[solver]} = gurobi ] then 
@@ -147,14 +147,14 @@ rule solve_lp:
         #     "cbc {input} solve -sec 1500 -solu {output.solution} 2> {log} && touch {output.json}"
         # fi
         # """
-# rule unzip_solution:
-#     message: "Unzip solution file {input}"
-#     group: "results"
-#     input: "temp/{scenario}/model_{model_run}.sol.gz"
-#     output: temp("temp/{scenario}/model_{model_run}.sol")
-#     shell: 
-#         #"gunzip -fcq {input} > {output}"
-#         "python workflow/scripts/decompress.py {input} {output}"
+rule unzip_solution:
+    message: "Unzip solution file {input}"
+    group: "results"
+    input: "temp/{scenario}/model_{model_run}.sol.gz"
+    output: temp("temp/{scenario}/model_{model_run}.sol")
+    shell: 
+        #"gunzip -fcq {input} > {output}"
+        "python workflow/scripts/decompress.py {input} {output}"
 
 
 rule process_solution:
